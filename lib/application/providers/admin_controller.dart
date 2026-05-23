@@ -1,16 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:proyecto_movil/infrastructure/datasources/local_data_source.dart';
+import 'package:proyecto_movil/infrastructure/datasources/supabase_data_source.dart';
 import 'package:proyecto_movil/domain/entities/admin_entity.dart';
 import 'package:proyecto_movil/application/providers/app_providers.dart';
 
 final adminControllerProvider =
-    StateNotifierProvider<AdminController, AdminState>((ref) {
-      final dataSource = ref.watch(localDataSourceProvider);
-      return AdminController(dataSource)..load();
-    });
-
-/* ============ State ============ */
+    StateNotifierProvider<AdminController, AdminState>(
+  (ref) => AdminController(ref.watch(supabaseDataSourceProvider))..load(),
+);
 
 class AdminState {
   final bool loading;
@@ -21,6 +17,7 @@ class AdminState {
   final bool notificationsEnabled;
   final bool spendAlertsEnabled;
   final int budget;
+  final String? error;
 
   const AdminState({
     required this.loading,
@@ -31,133 +28,145 @@ class AdminState {
     required this.notificationsEnabled,
     required this.spendAlertsEnabled,
     required this.budget,
+    this.error,
   });
 
   factory AdminState.initial() => const AdminState(
-    loading: false,
-    usersQuery: '',
-    users: [],
-    categories: [],
-    darkMode: false,
-    notificationsEnabled: true,
-    spendAlertsEnabled: true,
-    budget: 500000,
-  );
+        loading: false, usersQuery: '', users: [], categories: [],
+        darkMode: false, notificationsEnabled: true,
+        spendAlertsEnabled: true, budget: 500000,
+      );
 
   AdminState copyWith({
-    bool? loading,
-    String? usersQuery,
-    List<AdminUserEntity>? users,
-    List<AdminCategoryEntity>? categories,
-    bool? darkMode,
-    bool? notificationsEnabled,
-    bool? spendAlertsEnabled,
-    int? budget,
-  }) {
-    return AdminState(
-      loading: loading ?? this.loading,
-      usersQuery: usersQuery ?? this.usersQuery,
-      users: users ?? this.users,
-      categories: categories ?? this.categories,
-      darkMode: darkMode ?? this.darkMode,
-      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
-      spendAlertsEnabled: spendAlertsEnabled ?? this.spendAlertsEnabled,
-      budget: budget ?? this.budget,
-    );
-  }
+    bool? loading, String? usersQuery,
+    List<AdminUserEntity>? users, List<AdminCategoryEntity>? categories,
+    bool? darkMode, bool? notificationsEnabled,
+    bool? spendAlertsEnabled, int? budget, String? error,
+  }) =>
+      AdminState(
+        loading:              loading              ?? this.loading,
+        usersQuery:           usersQuery           ?? this.usersQuery,
+        users:                users                ?? this.users,
+        categories:           categories           ?? this.categories,
+        darkMode:             darkMode             ?? this.darkMode,
+        notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+        spendAlertsEnabled:   spendAlertsEnabled   ?? this.spendAlertsEnabled,
+        budget:               budget               ?? this.budget,
+        error:                error,
+      );
 }
 
-/* ============ Controller ============ */
-
 class AdminController extends StateNotifier<AdminState> {
-  final LocalDataSource _dataSource;
+  final SupabaseDataSource _ds;
+  AdminController(this._ds) : super(AdminState.initial());
 
-  AdminController(this._dataSource) : super(AdminState.initial());
-
-  void load() {
-    state = state.copyWith(
-      loading: false,
-      users: _dataSource.getUsers(),
-      categories: _dataSource.getGlobalCategories(),
-      darkMode: _dataSource.config['modoOscuro'] as bool? ?? false,
-      notificationsEnabled: _dataSource.config['notificaciones'] as bool? ?? true,
-      spendAlertsEnabled: _dataSource.config['alertasGasto'] as bool? ?? true,
-      budget: _dataSource.config['presupuesto'] as int? ?? 500000,
-    );
+  Future<void> load() async {
+    state = state.copyWith(loading: true, error: null);
+    try {
+      final users      = await _ds.getUsers();
+      final categories = await _ds.getGlobalCategories();
+      final cfg        = await _ds.getConfig();
+      state = state.copyWith(
+        loading: false, users: users, categories: categories,
+        darkMode:             cfg['modoOscuro']    as bool? ?? false,
+        notificationsEnabled: cfg['notificaciones'] as bool? ?? true,
+        budget:               cfg['presupuesto']   as int?  ?? 500000,
+      );
+    } catch (e) {
+      state = state.copyWith(loading: false, error: e.toString());
+    }
   }
 
-  /* -------- Usuarios -------- */
+  // ── usuarios ────────────────────────────────────────────────────────
   void setUsersQuery(String q) => state = state.copyWith(usersQuery: q);
 
   List<AdminUserEntity> filteredUsers() {
     final q = state.usersQuery.trim().toLowerCase();
     if (q.isEmpty) return state.users;
     return state.users
-        .where(
-          (u) =>
-              u.name.toLowerCase().contains(q) ||
-              u.email.toLowerCase().contains(q),
-        )
+        .where((u) => u.name.toLowerCase().contains(q) ||
+                      u.email.toLowerCase().contains(q))
         .toList();
   }
 
-  /* -------- Categorías — CRUD + persistencia -------- */
-  void addCategory(AdminCategoryEntity cat) {
-    final updated = [cat, ...state.categories];
-    state = state.copyWith(categories: updated);
-    _dataSource.addGlobalCategory(cat);
+  Future<void> setUserStatus(String userId, AdminUserStatus status) async {
+    try {
+      await _ds.updateUserStatus(userId, status);
+      state = state.copyWith(
+        users: state.users.map(
+          (u) => u.id == userId ? u.copyWith(status: status) : u,
+        ).toList(),
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
   }
 
-  void updateCategory(AdminCategoryEntity cat) {
-    final updated = state.categories
-        .map((c) => c.id == cat.id ? cat : c)
-        .toList();
-    state = state.copyWith(categories: updated);
-    _dataSource.updateGlobalCategory(cat);
+  // ── categorías ───────────────────────────────────────────────────────
+  Future<void> addCategory(AdminCategoryEntity cat) async {
+    try {
+      final saved = await _ds.addGlobalCategory(cat);
+      state = state.copyWith(categories: [saved, ...state.categories]);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
   }
 
-  void deleteCategory(String id) {
-    final updated = state.categories.where((c) => c.id != id).toList();
-    state = state.copyWith(categories: updated);
-    _dataSource.deleteGlobalCategory(id);
+  Future<void> updateCategory(AdminCategoryEntity cat) async {
+    try {
+      final updated = await _ds.updateCategory(cat);
+      state = state.copyWith(
+        categories: state.categories.map(
+          (c) => c.id == updated.id ? updated : c,
+        ).toList(),
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
   }
 
-  /* -------- Usuarios -------- */
-  void setUserStatus(String userId, AdminUserStatus status) {
-    final updated = state.users
-        .map((u) => u.id == userId ? u.copyWith(status: status) : u)
-        .toList();
-    state = state.copyWith(users: updated);
-    _dataSource.updateUserStatus(userId, status);
+  Future<void> deleteCategory(String id) async {
+    try {
+      await _ds.deleteCategory(id);
+      state = state.copyWith(
+        categories: state.categories.where((c) => c.id != id).toList(),
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
   }
 
-  /* -------- Config -------- */
-  void toggleDark(bool v) {
+  // ── config ───────────────────────────────────────────────────────────
+  Future<void> toggleDark(bool v) async {
     state = state.copyWith(darkMode: v);
-    _saveConfig();
+    await _saveConfig();
   }
 
-  void toggleNotifications(bool v) {
+  Future<void> toggleNotifications(bool v) async {
     state = state.copyWith(notificationsEnabled: v);
-    _saveConfig();
+    await _saveConfig();
   }
 
-  void toggleSpendAlerts(bool v) {
+  Future<void> toggleSpendAlerts(bool v) async {
     state = state.copyWith(spendAlertsEnabled: v);
-    _saveConfig();
+    await _saveConfig();
   }
 
-  void setBudget(int v) {
+  Future<void> setBudget(int v) async {
     state = state.copyWith(budget: v);
-    _saveConfig();
+    await _saveConfig();
   }
 
-  void _saveConfig() {
-    _dataSource.saveConfig({
-      'modoOscuro': state.darkMode,
-      'notificaciones': state.notificationsEnabled,
-      'alertasGasto': state.spendAlertsEnabled,
-      'presupuesto': state.budget,
-    });
+  Future<void> _saveConfig() async {
+    try {
+      await _ds.saveConfig({
+        'modoOscuro':    state.darkMode,
+        'notificaciones': state.notificationsEnabled,
+        'alertasGasto':  state.spendAlertsEnabled,
+        'presupuesto':   state.budget,
+      });
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
   }
 }

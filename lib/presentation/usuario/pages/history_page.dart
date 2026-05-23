@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:proyecto_movil/application/providers/app_providers.dart'; 
 import 'package:proyecto_movil/application/providers/admin_controller.dart';
 import 'package:proyecto_movil/application/providers/home_derived_providers.dart';
 import 'package:proyecto_movil/domain/entities/transaction_entity.dart';
@@ -14,6 +14,16 @@ class HistoryPage extends ConsumerStatefulWidget {
 
 class _HistoryPageState extends ConsumerState<HistoryPage> {
   static const primary = Color(0xFF4F46E5);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(transactionsControllerProvider.notifier)
+          .registrarConsultaHistorial(accion: 'visualizado');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

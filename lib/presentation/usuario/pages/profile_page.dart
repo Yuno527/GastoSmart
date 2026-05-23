@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:proyecto_movil/application/providers/app_providers.dart';
+import 'package:proyecto_movil/application/providers/profile_controller.dart';
 import 'package:proyecto_movil/presentation/routes.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -23,30 +24,67 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool darkMode = false;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadFromDb);
+  }
+
+  Future<void> _loadFromDb() async {
+    await ref.read(profileControllerProvider.notifier).load();
+    if (!mounted) return;
+    final profile = ref.read(profileControllerProvider);
+    if (profile.presupuesto != null) {
+      budgetCtrl.text = profile.presupuesto!.montoLimite.toString();
+    }
+    if (profile.metaAhorro != null) {
+      goalCtrl.text = profile.metaAhorro!.montoObjetivo.toString();
+    }
+    setState(() {});
+  }
+
+  Future<void> _saveBudget() async {
+    final monto = int.tryParse(budgetCtrl.text) ?? 0;
+    if (monto <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresa un monto válido')),
+      );
+      return;
+    }
+    final ok =
+        await ref.read(profileControllerProvider.notifier).savePresupuesto(monto);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? 'Presupuesto guardado ✅' : 'Error al guardar presupuesto'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _saveGoal() async {
+    final monto = int.tryParse(goalCtrl.text) ?? 0;
+    if (monto <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresa un monto válido')),
+      );
+      return;
+    }
+    final ok =
+        await ref.read(profileControllerProvider.notifier).saveMetaAhorro(monto);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? 'Meta guardada ✅' : 'Error al guardar meta'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  @override
   void dispose() {
     budgetCtrl.dispose();
     goalCtrl.dispose();
     super.dispose();
-  }
-
-  void _saveBudget() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Presupuesto guardado ✅'),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(milliseconds: 900),
-      ),
-    );
-  }
-
-  void _saveGoal() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Meta guardada ✅'),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(milliseconds: 900),
-      ),
-    );
   }
 
   Future<void> _logout() async {
@@ -74,7 +112,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     if (confirm != true) return;
 
-    // ✅ Ir al login (reemplaza la pantalla actual)
+    await ref.read(sessionServiceProvider).logout();
+    if (!mounted) return;
+
     context.go(Routes.login);
 
     // (Opcional) si quieres ver el mensaje, déjalo así:
@@ -91,7 +131,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final sessionService = ref.watch(sessionServiceProvider);
+    final profile = ref.watch(profileControllerProvider);
     final isAdmin = sessionService.isAdmin;
+    final presupuesto = profile.presupuesto?.montoLimite ?? 500000;
+    final meta = profile.metaAhorro;
 
     return Scaffold(
       backgroundColor: pageBg,
@@ -164,6 +207,41 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
                 if (isAdmin) const SizedBox(height: 14),
 
+                // Saldo actual (cuentas.saldo_actual)
+                _Card(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.account_balance_wallet_outlined,
+                          color: primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Saldo actual',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              '\$ ${_money(profile.saldoActual)}',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
                 // Metas financieras
                 _Card(
                   child: Column(
@@ -202,9 +280,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      const Text(
-                        'Monto máximo: \$ 500.000',
-                        style: TextStyle(color: Colors.black45, fontSize: 12.5),
+                      Text(
+                        'Monto máximo: \$ ${_money(presupuesto)}',
+                        style: const TextStyle(color: Colors.black45, fontSize: 12.5),
                       ),
 
                       const SizedBox(height: 14),
@@ -224,9 +302,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      const Text(
-                        'Objetivo: \$ 200.000',
-                        style: TextStyle(color: Colors.black45, fontSize: 12.5),
+                      Text(
+                        meta != null
+                            ? 'Progreso: \$ ${_money(meta.montoActual)} / \$ ${_money(meta.montoObjetivo)}'
+                            : 'Define tu objetivo de ahorro del mes',
+                        style: const TextStyle(color: Colors.black45, fontSize: 12.5),
                       ),
                     ],
                   ),
@@ -347,6 +427,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       ),
     );
   }
+}
+
+String _money(int v) {
+  final s = v.toString();
+  final b = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    final pos = s.length - i;
+    b.write(s[i]);
+    if (pos > 1 && pos % 3 == 1) b.write('.');
+  }
+  return b.toString();
 }
 
 /* ---------------- Widgets ---------------- */

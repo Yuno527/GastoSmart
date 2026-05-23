@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:proyecto_movil/application/providers/app_providers.dart';
+import 'package:proyecto_movil/application/providers/profile_controller.dart';
 import 'package:proyecto_movil/domain/entities/transaction_entity.dart';
 import 'package:proyecto_movil/presentation/usuario/pages/add_transaction_page.dart';
 import 'package:proyecto_movil/presentation/usuario/pages/history_page.dart';
@@ -20,18 +21,25 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => ref.read(transactionsControllerProvider.notifier).load(),
-    );
+    Future.microtask(() {
+      ref.read(transactionsControllerProvider.notifier).load();
+      ref.read(profileControllerProvider.notifier).load();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final txState = ref.watch(transactionsControllerProvider);
+    final profile = ref.watch(profileControllerProvider);
+    final session = ref.watch(sessionServiceProvider);
 
     final income = txState.incomeMonth;
     final expense = txState.expenseMonth;
     final balance = txState.balanceMonth;
+    final saldoTotal = profile.saldoActual;
+    final userName = session.currentUserName.isNotEmpty
+        ? session.currentUserName
+        : 'Usuario';
 
     final last = txState.items.take(3).toList();
     final donut = _buildDonut(txState.items, txState.monthRef);
@@ -64,18 +72,23 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '¡Hola, Usuario! 👋',
-                    style: TextStyle(
+                  Text(
+                    '¡Hola, $userName! 👋',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                   const SizedBox(height: 4),
+                  Text(
+                    'Saldo total: \$ ${_money(saldoTotal)}',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 4),
                   const Text(
-                    'Aquí está tu resumen financiero',
-                    style: TextStyle(color: Colors.white70),
+                    'Resumen del mes en curso',
+                    style: TextStyle(color: Colors.white60, fontSize: 12),
                   ),
                   const SizedBox(height: 14),
 

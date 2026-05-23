@@ -5,14 +5,29 @@ import 'package:proyecto_movil/application/providers/app_providers.dart';
 import 'package:proyecto_movil/application/providers/reports_providers.dart';
 import 'package:proyecto_movil/domain/entities/transaction_entity.dart';
 
-class ReportsPage extends ConsumerWidget {
+class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
 
   static const Color primary = Color(0xFF4F46E5);
   static const Color pageBg = Color(0xFFF6F7FB);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ReportsPage> createState() => _ReportsPageState();
+}
+
+class _ReportsPageState extends ConsumerState<ReportsPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(transactionsControllerProvider.notifier).load();
+      final items = ref.read(transactionsControllerProvider).items;
+      await ref.read(reportsControllerProvider.notifier).generarYGuardar(items);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final summary = ref.watch(reportsSummaryProvider);
     final txState = ref.watch(transactionsControllerProvider);
 
@@ -39,7 +54,7 @@ class ReportsPage extends ConsumerWidget {
     final month2Label = currentMonth != null ? _formatMonth(currentMonth) : 'Mes 2';
 
     return Scaffold(
-      backgroundColor: pageBg,
+      backgroundColor: ReportsPage.pageBg,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
@@ -72,9 +87,11 @@ class ReportsPage extends ConsumerWidget {
                   child: _KpiCard(
                     icon: Icons.show_chart_rounded,
                     iconBg: const Color(0xFFD1FAE5),
-                    value: '${summary.vsLastMonthPercent}%',
+                    value: '${summary.vsLastMonthPercent.toStringAsFixed(0)}%',
                     label: 'vs. mes anterior',
-                    valueColor: const Color(0xFF10B981),
+                    valueColor: summary.vsLastMonthPercent >= 0
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFEF4444),
                   ),
                 ),
               ],
@@ -152,10 +169,9 @@ class ReportsPage extends ConsumerWidget {
                 children: [
                   Text(
                     'Resumen de $month2Label',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 12),
-
                   _RowValue(
                     label: 'Total de ingresos',
                     value: _Money.format(summary.income),
@@ -179,6 +195,43 @@ class ReportsPage extends ConsumerWidget {
                 ],
               ),
             ),
+
+            if (summary.historialReportes.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Reportes guardados',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 10),
+              ...summary.historialReportes.take(6).map(
+                    (r) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _Card(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                r.periodo,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              _Money.format(r.balance),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                color: r.balance >= 0
+                                    ? const Color(0xFF10B981)
+                                    : const Color(0xFFEF4444),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+            ],
           ],
         ),
       ),

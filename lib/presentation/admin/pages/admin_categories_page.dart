@@ -29,7 +29,7 @@ class AdminCategoriesPage extends ConsumerWidget {
             child: ElevatedButton.icon(
               onPressed: () {
                 final newCat = AdminCategoryEntity(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  id: '',
                   name: 'Nueva categoría',
                   icon: Icons.category_outlined,
                   color: const Color(0xFF4F46E5),

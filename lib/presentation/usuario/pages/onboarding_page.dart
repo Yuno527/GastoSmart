@@ -45,11 +45,23 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     super.dispose();
   }
 
-  void _finish() {
-    // marca onboarding como visto
-    ref.read(showOnboardingProvider.notifier).update((_) => false); 
-    // navega a login
-    if (mounted) context.go(Routes.login);
+  void _finish() async {
+    final session = ref.read(sessionServiceProvider);
+    final ds = ref.read(supabaseDataSourceProvider);
+
+    if (session.isLoggedIn) {
+      await ds.completarOnboarding(session.currentUserId);
+    } else {
+      await session.markDeviceOnboardingDone();
+      ref.read(showOnboardingProvider.notifier).state = false;
+    }
+
+    if (!mounted) return;
+    if (session.isLoggedIn) {
+      context.go(session.isAdmin ? Routes.admin : Routes.home);
+    } else {
+      context.go(Routes.login);
+    }
   }
 
   void _next() {
@@ -61,6 +73,17 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOut,
     );
+  }
+
+  void _onPageChanged(int i) {
+    setState(() => _index = i);
+    final session = ref.read(sessionServiceProvider);
+    if (session.isLoggedIn) {
+      ref.read(supabaseDataSourceProvider).setOnboardingPaso(
+            session.currentUserId,
+            i + 1,
+          );
+    }
   }
 
   @override
@@ -93,7 +116,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   child: PageView.builder(
                     controller: _controller,
                     itemCount: _items.length,
-                    onPageChanged: (i) => setState(() => _index = i),
+                    onPageChanged: _onPageChanged,
                     itemBuilder: (_, i) {
                       final item = _items[i];
                       return Padding(
