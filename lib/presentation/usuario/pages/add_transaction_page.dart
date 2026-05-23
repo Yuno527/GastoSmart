@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:proyecto_movil/application/providers/admin_controller.dart';
+import 'package:proyecto_movil/application/providers/profile_controller.dart';
 import 'package:proyecto_movil/application/providers/app_providers.dart';
 import 'package:proyecto_movil/domain/entities/transaction_entity.dart';
 
@@ -95,8 +96,18 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     final sessionService = ref.read(sessionServiceProvider);
     final userId = sessionService.currentUserId;
 
+    if (userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Inicia sesión para guardar movimientos'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final tx = TransactionEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: '', // Supabase genera el UUID
       userId: userId,
       type: isExpense ? TransactionType.expense : TransactionType.income,
       amount: monto,
@@ -105,8 +116,29 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       note: noteCtrl.text.trim(),
     );
 
-    // ✅ importante: usar EL provider del DI
-    await ref.read(transactionsControllerProvider.notifier).add(tx);
+    final ok = await ref.read(transactionsControllerProvider.notifier).add(tx);
+    if (!mounted) return;
+
+    if (!ok) {
+      final err = ref.read(transactionsControllerProvider).error ?? 'Error al guardar';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
+    final txState = ref.read(transactionsControllerProvider);
+    await ref.read(profileControllerProvider.notifier).refreshSaldo();
+    await ref.read(profileControllerProvider.notifier).syncMetaProgreso(
+          txState.incomeMonth,
+          txState.expenseMonth,
+        );
+
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

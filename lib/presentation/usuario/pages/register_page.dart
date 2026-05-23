@@ -62,11 +62,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Future<void> _createAccount() async {
-    final name = nameCtrl.text.trim();
-    final email = emailCtrl.text.trim().toLowerCase();
-    final pass = passCtrl.text.trim();
+    final name    = nameCtrl.text.trim();
+    final email   = emailCtrl.text.trim().toLowerCase();
+    final pass    = passCtrl.text.trim();
     final confirm = confirmCtrl.text.trim();
-
+  
     if (name.isEmpty || email.isEmpty || pass.isEmpty || confirm.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Completa todos los campos')),
@@ -75,34 +75,46 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
     if (pass != confirm) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Las contrasenas no coinciden')),
+        const SnackBar(content: Text('Las contraseñas no coinciden')),
       );
       return;
     }
-
-    final dataSource = ref.read(localDataSourceProvider);
-
-    final exists = dataSource.users.any((u) => u.email.toLowerCase() == email);
-    if (exists) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ya existe una cuenta con ese correo')),
-      );
-      return;
-    }
-
+  
     setState(() => _loading = true);
 
-    final newUser = AdminUserEntity(
-      id: 'u${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      email: email,
-      password: pass,
-      createdAt: DateTime.now(),
-      status: AdminUserStatus.active,
-      role: AdminUserRole.user,
-    );
+    final dataSource = ref.read(supabaseDataSourceProvider);
 
-    await dataSource.addUser(newUser);
+    try {
+      final existing = await dataSource.getUserByEmail(email);
+      if (!mounted) return;
+      if (existing != null) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ya existe una cuenta con ese correo')),
+        );
+        return;
+      }
+
+      final newUser = AdminUserEntity(
+        id: '',
+        name: name,
+        email: email,
+        password: pass,
+        createdAt: DateTime.now(),
+        status: AdminUserStatus.active,
+        role: AdminUserRole.user,
+      );
+
+      final created = await dataSource.createUser(newUser);
+      await dataSource.iniciarOnboarding(created.id);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo crear la cuenta: $e')),
+      );
+      return;
+    }
 
     if (!mounted) return;
     setState(() => _loading = false);
@@ -117,6 +129,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
     _goBackToLogin();
   }
+
 
   @override
   Widget build(BuildContext context) {

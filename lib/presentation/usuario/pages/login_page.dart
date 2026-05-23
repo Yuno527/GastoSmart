@@ -49,66 +49,63 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _login() async {
-    final email = emailCtrl.text.trim().toLowerCase();
-    final pass = passCtrl.text.trim();
+  final email = emailCtrl.text.trim().toLowerCase();
+  final pass  = passCtrl.text.trim();
 
-    if (email.isEmpty || pass.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingresa correo y contraseña'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    setState(() => loading = true);
-
-    await Future.delayed(const Duration(milliseconds: 450));
-
-    setState(() => loading = false);
-
-    final dataSource = ref.read(localDataSourceProvider);
-    final users = dataSource.getUsers();
-
-    final user = users.firstWhere(
-      (u) => u.email.toLowerCase() == email && u.password == pass,
-      orElse: () => users.firstWhere(
-        (u) => u.email.toLowerCase() == email,
-        orElse: () => users.isNotEmpty ? users.first : users.first,
+  if (email.isEmpty || pass.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Ingresa correo y contraseña'),
+        behavior: SnackBarBehavior.floating,
       ),
     );
-
-    if (user.email.toLowerCase() != email || user.password != pass) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Credenciales incorrectas'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    if (user.status != AdminUserStatus.active) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Usuario inactivo o bloqueado'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    final sessionService = ref.read(sessionServiceProvider);
-    final role = user.role.name;
-    await sessionService.login(user.id, user.name, user.email, role);
-
-    if (role == 'admin') {
-      context.go(Routes.admin);
-    } else {
-      context.go(Routes.home);
-    }
+    return;
   }
+
+  setState(() => loading = true);
+
+  final dataSource = ref.read(supabaseDataSourceProvider);
+  final user = await dataSource.getUserByEmail(email);
+
+  setState(() => loading = false);
+
+  if (user == null || user.password != pass) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Credenciales incorrectas'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return;
+  }
+
+  if (user.status != AdminUserStatus.active) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Usuario inactivo o bloqueado'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return;
+  }
+
+  final sessionService = ref.read(sessionServiceProvider);
+  final role = user.role.name;
+  await sessionService.login(user.id, user.name, user.email, role);
+
+  if (!mounted) return;
+
+  final onboardingDone =
+      await dataSource.getOnboardingCompletado(user.id);
+
+  if (!onboardingDone) {
+    context.go(Routes.onboarding);
+  } else if (role == 'admin') {
+    context.go(Routes.admin);
+  } else {
+    context.go(Routes.home);
+  }
+}
 
   @override
   Widget build(BuildContext context) {

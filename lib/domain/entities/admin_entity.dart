@@ -12,6 +12,7 @@ class AdminUserEntity {
   final DateTime createdAt;
   final AdminUserStatus status;
   final AdminUserRole role;
+  final int saldoActual;
 
   const AdminUserEntity({
     required this.id,
@@ -21,9 +22,14 @@ class AdminUserEntity {
     required this.createdAt,
     required this.status,
     required this.role,
+    this.saldoActual = 0,
   });
 
-  AdminUserEntity copyWith({AdminUserStatus? status, AdminUserRole? role}) {
+  AdminUserEntity copyWith({
+    AdminUserStatus? status,
+    AdminUserRole? role,
+    int? saldoActual,
+  }) {
     return AdminUserEntity(
       id: id,
       name: name,
@@ -32,6 +38,7 @@ class AdminUserEntity {
       createdAt: createdAt,
       status: status ?? this.status,
       role: role ?? this.role,
+      saldoActual: saldoActual ?? this.saldoActual,
     );
   }
 }

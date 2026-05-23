@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:proyecto_movil/presentation/routes.dart';
-import 'package:proyecto_movil/infrastructure/datasources/local_data_source.dart';
 import 'package:proyecto_movil/application/providers/app_providers.dart';
 import 'package:proyecto_movil/infrastructure/services/session_service.dart';
 import 'package:proyecto_movil/config/app_theme.dart';
@@ -10,19 +10,20 @@ import 'package:proyecto_movil/config/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializa data source: carga desde shared_preferences o desde assets/data/app_data.json
-  final localDataSource = LocalDataSource();
-  await localDataSource.init();
+  await Supabase.initialize(
+    url: 'https://wipqthtzcgfqjwgpjiuo.supabase.co',
+    anonKey: 'sb_publishable_vH60qq8XlpwFL0EPz23x2g_VAGD76NW',
+  );
 
-  // Inicializa servicio de sesión
   final sessionService = SessionService();
   await sessionService.init();
+  final deviceOnboardingDone = await sessionService.isDeviceOnboardingDone();
 
   runApp(
     ProviderScope(
       overrides: [
-        localDataSourceProvider.overrideWithValue(localDataSource),
         sessionServiceProvider.overrideWithValue(sessionService),
+        showOnboardingProvider.overrideWith((_) => !deviceOnboardingDone),
       ],
       child: const MyApp(),
     ),

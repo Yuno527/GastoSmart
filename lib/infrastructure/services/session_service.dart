@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SessionService {
   static const _kUserIdKey = 'current_user_id';
   static const _kUserRoleKey = 'current_user_role';
+  static const _kUserNameKey = 'current_user_name';
+  static const _kDeviceOnboardingKey = 'device_onboarding_done';
 
   String? _currentUserId;
   String? _currentUserName;
@@ -20,6 +22,17 @@ class SessionService {
     final prefs = await SharedPreferences.getInstance();
     _currentUserId = prefs.getString(_kUserIdKey);
     _currentUserRole = prefs.getString(_kUserRoleKey);
+    _currentUserName = prefs.getString(_kUserNameKey);
+  }
+
+  Future<bool> isDeviceOnboardingDone() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kDeviceOnboardingKey) ?? false;
+  }
+
+  Future<void> markDeviceOnboardingDone() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kDeviceOnboardingKey, true);
   }
 
   Future<void> login(String userId, String name, String email, String role) async {
@@ -30,6 +43,7 @@ class SessionService {
     _currentUserRole = role;
     await prefs.setString(_kUserIdKey, userId);
     await prefs.setString(_kUserRoleKey, role);
+    await prefs.setString(_kUserNameKey, name);
   }
 
   Future<void> logout() async {
@@ -40,5 +54,6 @@ class SessionService {
     _currentUserRole = null;
     await prefs.remove(_kUserIdKey);
     await prefs.remove(_kUserRoleKey);
+    await prefs.remove(_kUserNameKey);
   }
 }
