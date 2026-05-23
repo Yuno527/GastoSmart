@@ -1,0 +1,7 @@
+Esta versión reorganiza el proyecto a una arquitectura MVC modular sencilla por roles:
+- lib/admin
+- lib/usuario
+- lib/shared
+- lib/utils
+
+La lógica y el diseño original se conservan; solo se cambiaron ubicaciones de archivos e imports.

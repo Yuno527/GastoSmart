@@ -1,0 +1,60 @@
+{
+  "app": {
+    "nombre": "FinanceApp",
+    "version": "1.0.0"
+  },
+
+  "config": {
+    "modoOscuro": false,
+    "notificaciones": true,
+    "alertasGasto": true,
+    "presupuesto": 500000
+  },
+
+  "categorias_globales": [
+    { "id": "c1", "nombre": "Alimentación",  "icono": "restaurant", "color": "#10B981" },
+    { "id": "c2", "nombre": "Café y Snacks", "icono": "cafe",       "color": "#F59E0B" },
+    { "id": "c3", "nombre": "Transporte",    "icono": "car",        "color": "#3B82F6" },
+    { "id": "c4", "nombre": "Vivienda",      "icono": "home",       "color": "#8B5CF6" },
+    { "id": "c5", "nombre": "Tecnología",    "icono": "devices",    "color": "#06B6D4" },
+    { "id": "c6", "nombre": "Salud",         "icono": "health",     "color": "#EF4444" }
+  ],
+
+  "categorias_usuario": [],
+
+  "usuarios": [
+    { "id": "u1", "nombre": "María González", "email": "maria.g@gmail.com",  "contrasena": "maria123", "fechaCreacion": "2026-02-15", "estado": "activo",    "rol": "usuario" },
+    { "id": "u2", "nombre": "Carlos Pérez",   "email": "carlos.p@gmail.com", "contrasena": "carlos123", "fechaCreacion": "2026-02-10", "estado": "activo",    "rol": "usuario" },
+    { "id": "u3", "nombre": "Ana Martínez",   "email": "ana.m@gmail.com",    "contrasena": "ana123",   "fechaCreacion": "2026-02-08", "estado": "inactivo",  "rol": "usuario" },
+    { "id": "u4", "nombre": "Luis Rodríguez", "email": "luis.r@gmail.com",   "contrasena": "luis123",  "fechaCreacion": "2026-01-20", "estado": "bloqueado", "rol": "usuario" },
+    { "id": "u5", "nombre": "Sofía López",    "email": "sofia.l@gmail.com",  "contrasena": "sofia123", "fechaCreacion": "2026-01-28", "estado": "activo",    "rol": "usuario" },
+    { "id": "u6", "nombre": "Diego Torres",   "email": "diego.t@gmail.com",  "contrasena": "diego123", "fechaCreacion": "2026-01-25", "estado": "activo",    "rol": "usuario" },
+    { "id": "u7", "nombre": "breineradmin",   "email": "admin@finance.com",  "contrasena": "admin123", "fechaCreacion": "2026-01-01", "estado": "activo",    "rol": "admin" }
+  ],
+
+  "transacciones": [
+    { "id": "demo-1", "usuario_id": "u1", "tipo": "gasto",   "monto": 45000,  "categoria": "Alimentación",  "fecha": "2026-02-18", "nota": "Supermercado"    },
+    { "id": "demo-2", "usuario_id": "u1", "tipo": "gasto",   "monto": 22000,  "categoria": "Alimentación",  "fecha": "2026-02-13", "nota": "Almuerzo"        },
+    { "id": "demo-3", "usuario_id": "u1", "tipo": "gasto",   "monto": 12000,  "categoria": "Transporte",    "fecha": "2026-02-16", "nota": "Uber"            },
+    { "id": "demo-4", "usuario_id": "u1", "tipo": "gasto",   "monto": 8000,   "categoria": "Transporte",    "fecha": "2026-02-11", "nota": "Bus"             },
+    { "id": "demo-5", "usuario_id": "u2", "tipo": "gasto",   "monto": 35000,  "categoria": "Tecnología",    "fecha": "2026-02-15", "nota": "Audífonos"       },
+    { "id": "demo-6", "usuario_id": "u2", "tipo": "gasto",   "monto": 25000,  "categoria": "Salud",         "fecha": "2026-02-14", "nota": "Farmacia"        },
+    { "id": "demo-7", "usuario_id": "u2", "tipo": "gasto",   "monto": 15000,  "categoria": "Café y Snacks", "fecha": "2026-02-12", "nota": "Café y postre"   },
+    { "id": "demo-8", "usuario_id": "u2", "tipo": "ingreso", "monto": 300000, "categoria": "Mesada",        "fecha": "2026-02-17", "nota": "Pago mensual"    },
+    { "id": "demo-9", "usuario_id": "u3", "tipo": "gasto",   "monto": 18000,  "categoria": "Alimentación",  "fecha": "2026-03-10", "nota": "Compras"         },
+    { "id": "demo-10", "usuario_id": "u3", "tipo": "gasto",  "monto": 25000,  "categoria": "Transporte",    "fecha": "2026-03-08", "nota": "Gasolina"         },
+    { "id": "demo-11", "usuario_id": "u3", "tipo": "gasto",  "monto": 12000,  "categoria": "Café y Snacks", "fecha": "2026-03-05", "nota": "Cafetería"        },
+    { "id": "demo-12", "usuario_id": "u3", "tipo": "ingreso", "monto": 450000, "categoria": "Trabajo",       "fecha": "2026-03-01", "nota": "Salario"          },
+    { "id": "demo-13", "usuario_id": "u4", "tipo": "gasto",  "monto": 30000,  "categoria": "Salud",         "fecha": "2026-01-25", "nota": "Médico"           },
+    { "id": "demo-14", "usuario_id": "u4", "tipo": "gasto",  "monto": 15000,  "categoria": "Café y Snacks", "fecha": "2026-01-22", "nota": "Snack"            },
+    { "id": "demo-15", "usuario_id": "u4", "tipo": "ingreso", "monto": 280000, "categoria": "Trabajo",       "fecha": "2026-01-15", "nota": "Freelance"        },
+    { "id": "demo-16", "usuario_id": "u5", "tipo": "gasto",  "monto": 40000,  "categoria": "Alimentación",  "fecha": "2026-04-12", "nota": "Mercado"          },
+    { "id": "demo-17", "usuario_id": "u5", "tipo": "gasto",  "monto": 20000,  "categoria": "Transporte",    "fecha": "2026-04-10", "nota": "Taxi"             },
+    { "id": "demo-18", "usuario_id": "u5", "tipo": "gasto",  "monto": 35000,  "categoria": "Tecnología",    "fecha": "2026-04-08", "nota": "Accesorios"       },
+    { "id": "demo-19", "usuario_id": "u5", "tipo": "ingreso", "monto": 500000, "categoria": "Mesada",        "fecha": "2026-04-05", "nota": "Mensual"          },
+    { "id": "demo-20", "usuario_id": "u6", "tipo": "gasto",  "monto": 22000,  "categoria": "Vivienda",      "fecha": "2026-04-15", "nota": "Servicios"        },
+    { "id": "demo-21", "usuario_id": "u6", "tipo": "gasto",  "monto": 18000,  "categoria": "Alimentación",  "fecha": "2026-04-13", "nota": "Restaurante"      },
+    { "id": "demo-22", "usuario_id": "u6", "tipo": "gasto",  "monto": 10000,  "categoria": "Transporte",    "fecha": "2026-04-11", "nota": "Bus"              },
+    { "id": "demo-23", "usuario_id": "u6", "tipo": "ingreso", "monto": 350000, "categoria": "Trabajo",       "fecha": "2026-04-01", "nota": "Salario"          }
+  ]
+}
