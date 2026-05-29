@@ -53,8 +53,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       await ds.completarOnboarding(session.currentUserId);
     } else {
       await session.markDeviceOnboardingDone();
-      ref.read(showOnboardingProvider.notifier).state = false;
     }
+    
+    // Actualizar el provider en ambos casos
+    ref.read(showOnboardingProvider.notifier).state = false;
 
     if (!mounted) return;
     if (session.isLoggedIn) {

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:proyecto_movil/presentation/routes.dart';
 import 'package:proyecto_movil/application/providers/app_providers.dart';
 import 'package:proyecto_movil/infrastructure/services/session_service.dart';
+import 'package:proyecto_movil/infrastructure/datasources/supabase_data_source.dart';
 import 'package:proyecto_movil/config/app_theme.dart';
 
 void main() async {
@@ -17,13 +18,27 @@ void main() async {
 
   final sessionService = SessionService();
   await sessionService.init();
-  final deviceOnboardingDone = await sessionService.isDeviceOnboardingDone();
+  
+  // Verificar si el onboarding debe mostrarse
+  bool showOnboarding = true;
+  
+  if (sessionService.isLoggedIn) {
+    // Si el usuario está logueado, verificar el estado en Supabase
+    final supabaseClient = Supabase.instance.client;
+    final dataSource = SupabaseDataSource(supabaseClient);
+    final onboardingDone = await dataSource.getOnboardingCompletado(sessionService.currentUserId);
+    showOnboarding = !onboardingDone;
+  } else {
+    // Si no está logueado, verificar el estado en SharedPreferences
+    final deviceOnboardingDone = await sessionService.isDeviceOnboardingDone();
+    showOnboarding = !deviceOnboardingDone;
+  }
 
   runApp(
     ProviderScope(
       overrides: [
         sessionServiceProvider.overrideWithValue(sessionService),
-        showOnboardingProvider.overrideWith((_) => !deviceOnboardingDone),
+        showOnboardingProvider.overrideWith((_) => showOnboarding),
       ],
       child: const MyApp(),
     ),

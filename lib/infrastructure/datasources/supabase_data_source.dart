@@ -9,7 +9,7 @@ class SupabaseDataSource {
   SupabaseDataSource(this._client);
   final SupabaseClient _client;
 
-  // ── movimientos ──────────────────────────────────────────────────────
+  // === movimientos ========================================================
   Future<List<TransactionEntity>> getTransactions(String userId) async {
     final rows = await _client
         .from('movimientos')
@@ -47,7 +47,7 @@ class SupabaseDataSource {
     await syncSaldoActual(userId);
   }
 
-  // ── categorías ───────────────────────────────────────────────────────
+  // === categorías ========================================================
   Future<List<AdminCategoryEntity>> getGlobalCategories() async {
     final rows = await _client
         .from('categorias')
@@ -101,7 +101,7 @@ class SupabaseDataSource {
     await _client.from('categorias').update({'activa': false}).eq('id', id);
   }
 
-  // ── usuarios ─────────────────────────────────────────────────────────
+  // === usuarios ========================================================
   Future<List<AdminUserEntity>> getUsers() async {
     final rows = await _client.from('cuentas').select().order('nombre');
     return rows.map(SupabaseMappers.rowToUser).toList();
@@ -174,7 +174,7 @@ class SupabaseDataSource {
         .eq('id', userId);
   }
 
-  // ── historial + detalle_historial ────────────────────────────────────
+  // === historial + detalle_historial ========================================================
   Future<HistorialEntity> registrarConsulta({
     required String userId,
     required List<TransactionEntity> movimientosConsultados,
@@ -256,7 +256,7 @@ class SupabaseDataSource {
     );
   }
 
-  // ── config ───────────────────────────────────────────────────────────
+  // === config ========================================================
   Future<Map<String, dynamic>> getConfig() async {
     final row = await _client.from('config_sistema').select().single();
     return {
@@ -274,7 +274,7 @@ class SupabaseDataSource {
     }).eq('id', 1);
   }
 
-  // ── onboarding ───────────────────────────────────────────────────────
+  // === onboarding ========================================================
   Future<OnboardingEntity?> getOnboarding(String userId) async {
     final row = await _client
         .from('onboarding')
@@ -326,7 +326,7 @@ class SupabaseDataSource {
     await _upsertOnboarding(userId, completado: true, pasoActual: 3);
   }
 
-  // ── presupuestos ─────────────────────────────────────────────────────
+  // === presupuestos ========================================================
   static (DateTime, DateTime) _rangoMesActual() {
     final now = DateTime.now();
     final inicio = DateTime(now.year, now.month, 1);
@@ -384,7 +384,7 @@ class SupabaseDataSource {
     return SupabaseMappers.rowToPresupuesto(row);
   }
 
-  // ── metas_ahorro ─────────────────────────────────────────────────────
+  // === metas_ahorro ========================================================
   Future<MetaAhorroEntity?> getMetaAhorroPrincipal(String userId) async {
     final rows = await _client
         .from('metas_ahorro')
@@ -441,7 +441,7 @@ class SupabaseDataSource {
         .eq('id', meta.id);
   }
 
-  // ── reportes_personales ──────────────────────────────────────────────
+  // === reportes_personales ========================================================
   Future<List<ReportePersonalEntity>> getReportes(String userId) async {
     final rows = await _client
         .from('reportes_personales')
