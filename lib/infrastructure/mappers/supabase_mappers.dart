@@ -4,7 +4,7 @@ import 'package:proyecto_movil/domain/entities/admin_entity.dart';
 import 'package:proyecto_movil/domain/entities/user_finance_entity.dart';
 
 class SupabaseMappers {
-  // ── iconos ──────────────────────────────────────────────────────────
+  // ======= iconos ======================================================================
   static const _iconMap = <String, IconData>{
     'restaurant': Icons.restaurant_outlined,
     'cafe':       Icons.local_cafe_outlined,
@@ -36,7 +36,7 @@ class SupabaseMappers {
     return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 
-  // ── movimientos ──────────────────────────────────────────────────────
+  // ======= movimientos ======================================================================
   static TransactionEntity movimientoToEntity(Map<String, dynamic> row) {
     return TransactionEntity(
       id:       row['id'] as String,
@@ -64,7 +64,7 @@ class SupabaseMappers {
     };
   }
 
-  // ── detalle_historial ────────────────────────────────────────────────
+  // ======= detalle_historial ======================================================================
   static Map<String, dynamic> entityToDetalleHistorial({
     required String historialId,
     required TransactionEntity tx,
@@ -97,7 +97,7 @@ class SupabaseMappers {
     );
   }
 
-  // ── categorías ───────────────────────────────────────────────────────
+  // ======= categorías ======================================================================
   static AdminCategoryEntity rowToCategory(Map<String, dynamic> row) {
     return AdminCategoryEntity(
       id:    row['id'] as String,
@@ -121,7 +121,7 @@ class SupabaseMappers {
     };
   }
 
-  // ── usuarios ─────────────────────────────────────────────────────────
+  // ======= usuarios ======================================================================
   static AdminUserEntity rowToUser(Map<String, dynamic> row) {
     AdminUserStatus status;
     switch (row['estado'] as String? ?? 'activo') {
@@ -168,7 +168,7 @@ class SupabaseMappers {
   static String _dateOnly(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  // ── presupuestos ─────────────────────────────────────────────────────
+  // ======= presupuestos ======================================================================
   static PresupuestoEntity rowToPresupuesto(Map<String, dynamic> row) {
     return PresupuestoEntity(
       id:          row['id'] as String,
@@ -191,7 +191,7 @@ class SupabaseMappers {
     };
   }
 
-  // ── metas_ahorro ─────────────────────────────────────────────────────
+  // ======= metas_ahorro ======================================================================
   static MetaAhorroEntity rowToMetaAhorro(Map<String, dynamic> row) {
     return MetaAhorroEntity(
       id:            row['id'] as String,
@@ -214,7 +214,7 @@ class SupabaseMappers {
     };
   }
 
-  // ── reportes_personales ────────────────────────────────────────────
+  // ======= reportes_personales ======================================================================
   static ReportePersonalEntity rowToReporte(Map<String, dynamic> row) {
     return ReportePersonalEntity(
       id:            row['id'] as String,
@@ -238,7 +238,7 @@ class SupabaseMappers {
     };
   }
 
-  // ── onboarding ───────────────────────────────────────────────────────
+  // ======= onboarding ======================================================================
   static OnboardingEntity rowToOnboarding(Map<String, dynamic> row) {
     return OnboardingEntity(
       id:         row['id'] as String,

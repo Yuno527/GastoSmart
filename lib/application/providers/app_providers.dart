@@ -8,7 +8,7 @@ import 'package:proyecto_movil/domain/usecases/add_transaction_usecase.dart';
 import 'package:proyecto_movil/domain/entities/transaction_entity.dart';
 import 'package:proyecto_movil/domain/entities/historial_entity.dart';
 
-// ── cliente & datasource ─────────────────────────────────────────────
+// ==== cliente & datasource ==============================================================================
 final supabaseClientProvider = Provider<SupabaseClient>(
   (_) => Supabase.instance.client,
 );
@@ -17,26 +17,26 @@ final supabaseDataSourceProvider = Provider<SupabaseDataSource>(
   (ref) => SupabaseDataSource(ref.watch(supabaseClientProvider)),
 );
 
-// ── servicios ────────────────────────────────────────────────────────
+// ==== servicios ===============================================================================
 final sessionServiceProvider = Provider<SessionService>(
   (_) => throw UnimplementedError('Sobreescribir en ProviderScope'),
 );
 
-// ── repositorios ─────────────────────────────────────────────────────
+// ==== repositorios ==============================================================================
 final transactionsRepositoryProvider =
     Provider<SupabaseTransactionsRepository>(
   (ref) => SupabaseTransactionsRepository(ref.watch(supabaseDataSourceProvider)),
 );
 
-// ── use cases ────────────────────────────────────────────────────────
+// ==== use cases ==============================================================================
 final addTransactionUseCaseProvider = Provider<AddTransactionUseCase>(
   (ref) => AddTransactionUseCase(ref.watch(transactionsRepositoryProvider)),
 );
 
-// ── onboarding ───────────────────────────────────────────────────────
+// ==== onboarding ==============================================================================
 final showOnboardingProvider = StateProvider<bool>((_) => true);
 
-// ── TransactionsState ────────────────────────────────────────────────
+// ==== TransactionsState ==============================================================================
 class TransactionsState {
   final List<TransactionEntity> items;
   final DateTime monthRef;
@@ -87,7 +87,7 @@ class TransactionsState {
       );
 }
 
-// ── TransactionsController ───────────────────────────────────────────
+// ==== TransactionsController ==============================================================================
 class TransactionsController extends StateNotifier<TransactionsState> {
   final SupabaseTransactionsRepository repo;
   final AddTransactionUseCase addUseCase;
@@ -210,7 +210,7 @@ final transactionsControllerProvider =
   );
 });
 
-// ── HistorialState & Controller ──────────────────────────────────────
+// ==== HistorialState & Controller ==============================================================================
 class HistorialState {
   final List<HistorialEntity> historial;
   final HistorialEntity? seleccionado;
